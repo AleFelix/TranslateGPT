@@ -9,7 +9,9 @@ export default function Home() {
   const [answer, setAnswer] = useState('');
   const [chatID, setChatID] = useState('0');
   const [waitingResponse, setWaitingResponse] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [intervalStarted, setIntervalStarted] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     void getSessionData();
@@ -27,7 +29,7 @@ export default function Home() {
 
   const getSessionData = async () => {
     const response = await fetch('/api/get-session-data');
-    const { session_id: sessionID, user_fake_id: userFakeID } = await response.json();
+    const {session_id: sessionID, user_fake_id: userFakeID} = await response.json();
     setSessionID(sessionID);
     setUserFakeID(userFakeID);
     console.log('sessionID', sessionID);
@@ -39,7 +41,7 @@ export default function Home() {
     console.log('userFakeID', userFakeID);
     await fetch('/api/keep-session-alive', {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID }),
+      body: JSON.stringify({session_id: sessionID, user_fake_id: userFakeID}),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -47,9 +49,15 @@ export default function Home() {
   }
 
   const sendMessage = async () => {
+    setSendingMessage(true);
     const response = await fetch('/api/send-message', {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID, question: messageHeader + "\n\n" + message, parent_id: chatID }),
+      body: JSON.stringify({
+        session_id: sessionID,
+        user_fake_id: userFakeID,
+        question: messageHeader + "\n\n" + message,
+        parent_id: chatID
+      }),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -57,7 +65,9 @@ export default function Home() {
     const result = await response.json();
     if (result?.resp_data?.chat_id) {
       setChatID(result.resp_data.chat_id);
-      setWaitingResponse(true);}
+      setWaitingResponse(true);
+    }
+    setSendingMessage(false);
   }
 
   useEffect(() => {
@@ -73,7 +83,7 @@ export default function Home() {
   const readResponse = async () => {
     const response = await fetch('/api/read-response', {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID, parent_id: chatID }),
+      body: JSON.stringify({session_id: sessionID, user_fake_id: userFakeID, parent_id: chatID}),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -91,9 +101,16 @@ export default function Home() {
     await sendMessage();
   };
 
+  const handleDarkModeClick = async () => {
+    setDarkMode(!darkMode);
+  }
+
   return (
-    <div className="container-gpt">
+    <>
       <link href="https://fonts.cdnfonts.com/css/roboto" rel="stylesheet"></link>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+            crossOrigin="anonymous" referrerPolicy="no-referrer"/>
       <style>
         {`
           .container-gpt {
@@ -103,6 +120,13 @@ export default function Home() {
             justify-content: center;
             height: 100vh;
             background-color: #fafafa;
+          }
+          .dark-mode-button-container {
+            display: block;
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            right: 0;
           }
           .title-gpt {
             font-family: Roboto, Arial;
@@ -306,27 +330,91 @@ export default function Home() {
             animation-delay: 0.6s;
           }
       `}
+        {darkMode && `
+        .container-gpt {
+          background-color: #111827;
+          color: #FFFFFF;
+        }
+        .title-gpt {
+          color: #FFFFFF;
+        }
+        .prompt-header {
+          background-color: #1f2937;
+          color: #FFFFFF;
+          border: none;
+        }
+        .textarea {
+          background-color: #1f2937;
+          color: #FFFFFF;
+          border: none;
+        }
+        .send-prompt-button {
+          background-color: #1f2937;
+          color: #FFFFFF;
+        }
+        .send-prompt-button:hover {
+          background-color: #11151c;
+        }
+        .send-prompt-button:disabled {
+          background-color: #11151c;
+          cursor: default;
+        }
+        .answer-div {
+          background-color: #1f2937;
+          color: #FFFFFF;
+          cursor: default;
+        }
+        .dark-mode-button {
+          background-color: #1f2937;
+          color: #FFFFFF;
+        }
+        .loading-container {
+          background-color: #1f2937;
+          color: #FFFFFF;
+        }
+        .lds-ellipsis div {
+          background: #FFFFFF;
+        }
+        .letter-container {
+          color: #FFFFFF;
+        }
+      `}
       </style>
-      <h1 className="title-gpt">TranslateGPT</h1>
-      <div className="prompt-header-container">
-        <input className="prompt-header" type="text" placeholder="Prompt header" value={messageHeader} onChange={(e) => setMessageHeader(e.target.value)} />
+      <div className="container-gpt">
+        <div className="dark-mode-button-container">
+          <button className="dark-mode-button" onClick={handleDarkModeClick}>
+            {darkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+          </button>
+        </div>
+        <h1 className="title-gpt">TranslateGPT</h1>
+        <div className="prompt-header-container">
+          <input className="prompt-header" type="text" placeholder="Prompt header" value={messageHeader}
+                 onChange={(e) => setMessageHeader(e.target.value)}/>
+        </div>
+        <div className="main-container">
+          <textarea className="prompt-textarea textarea" value={message} onChange={(e) => setMessage(e.target.value)}/>
+          <button className={(waitingResponse || sendingMessage) ? "send-prompt-button rotate-and-scale" : "send-prompt-button"}
+                  onClick={handleButtonClick} disabled={waitingResponse || sendingMessage}>Enviar
+          </button>
+          <div className="answer-div textarea">{answer}</div>
+        </div>
+        {(waitingResponse || sendingMessage) &&
+            <div className="loading-container">
+                <div className="letter-container">
+                    <div>M</div>
+                    <div>A</div>
+                    <div>X</div>
+                    <div>I</div>
+                </div>
+                <div className="lds-ellipsis">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+        }
       </div>
-      <div className="main-container">
-        <textarea className="prompt-textarea textarea" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <button className={waitingResponse ? "send-prompt-button rotate-and-scale" : "send-prompt-button"} onClick={handleButtonClick} disabled={waitingResponse}>Enviar</button>
-        <div className="answer-div textarea">{answer}</div>
-      </div>
-      {waitingResponse &&
-          <div className="loading-container">
-              <div className="letter-container">
-                  <div>M</div>
-                  <div>A</div>
-                  <div>X</div>
-                  <div>I</div>
-              </div>
-            <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-          </div>
-      }
-    </div>
+    </>
   );
 }
