@@ -1,124 +1,317 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
+/* eslint-disable react-hooks/exhaustive-deps */
+import {useEffect, useState} from 'react';
 
 export default function Home() {
+  const [sessionID, setSessionID] = useState('');
+  const [userFakeID, setUserFakeID] = useState('');
+  const [message, setMessage] = useState('');
+  const [messageHeader, setMessageHeader] = useState('Traducir al ingles lo siguiente:');
+  const [answer, setAnswer] = useState('');
+  const [chatID, setChatID] = useState('0');
+  const [waitingResponse, setWaitingResponse] = useState(false);
+  const [intervalStarted, setIntervalStarted] = useState(false);
+
+  useEffect(() => {
+    void getSessionData();
+  }, []);
+
+  useEffect(() => {
+    if (intervalStarted || !sessionID || !userFakeID) {
+      return;
+    }
+    setInterval(() => {
+      void keepSessionAlive();
+    }, 30000);
+    setIntervalStarted(true);
+  }, [sessionID, userFakeID]);
+
+  const getSessionData = async () => {
+    const response = await fetch('/api/get-session-data');
+    const { session_id: sessionID, user_fake_id: userFakeID } = await response.json();
+    setSessionID(sessionID);
+    setUserFakeID(userFakeID);
+    console.log('sessionID', sessionID);
+    console.log('userFakeID', userFakeID);
+  };
+
+  const keepSessionAlive = async () => {
+    console.log('sessionID', sessionID);
+    console.log('userFakeID', userFakeID);
+    await fetch('/api/keep-session-alive', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  const sendMessage = async () => {
+    const response = await fetch('/api/send-message', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID, question: messageHeader + "\n\n" + message, parent_id: chatID }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await response.json();
+    if (result?.resp_data?.chat_id) {
+      setChatID(result.resp_data.chat_id);
+      setWaitingResponse(true);}
+  }
+
+  useEffect(() => {
+    if (!waitingResponse) {
+      return;
+    }
+    const interval = setInterval(() => {
+      void readResponse();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [waitingResponse]);
+
+  const readResponse = async () => {
+    const response = await fetch('/api/read-response', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionID, user_fake_id: userFakeID, parent_id: chatID }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await response.json();
+    if (result?.resp_data?.answer) {
+      setAnswer(result.resp_data.answer);
+    }
+    if (result?.resp_data?.status === 3 || result?.resp_data?.status != 1) {
+      setWaitingResponse(false);
+    }
+  }
+
+  const handleButtonClick = async () => {
+    await sendMessage();
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div className="container-gpt">
+      <link href="https://fonts.cdnfonts.com/css/roboto" rel="stylesheet"></link>
+      <style>
+        {`
+          .container-gpt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #fafafa;
+          }
+          .title-gpt {
+            font-family: Roboto, Arial;
+            font-size: 36px;
+            font-weight: 700;
+            color: #000000;
+            margin: 30px;
+          }
+          .prompt-header-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+          }
+          .prompt-header {
+            margin: 10px;
+            width: 30%;
+            height: 50px;
+            font-family: Roboto, Arial;
+            font-size: 16px;
+            background-color: #FFFFFF;
+            border: 1px solid #CCCCCC;
+            color: #000000;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,.37);
+          }
+          .main-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            height: 80%;
+            width: 100%;
+          }
+          textarea {
+            margin: 10px;
+            width: 30%;
+            height: 70%;
+            font-family: Roboto, Arial;
+            font-size: 16px;
+            background-color: #FFFFFF;
+            border: 1px solid #CCCCCC;
+            color: #000000;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 1px 4px 0 rgba(0,0,0,.37);
+          }
+          .send-prompt-button {
+            margin: 10px;
+            font-family: Roboto, Arial;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+          }
+          .send-prompt-button:hover {
+            background-color: #3E8E41;
+          }
+          .send-prompt-button:disabled {
+            background-color: #CCCCCC;
+            cursor: default;
+          }
+          .answer-textarea {
+            background-color: #f5f5f5;
+            cursor: default;
+          }
+          .loading-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #FFFFFF;
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+          }
+          .lds-ellipsis {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+          }
+          .lds-ellipsis div {
+            position: absolute;
+            top: 33px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+          }
+          .lds-ellipsis div:nth-child(1) {
+            left: 8px;
+            animation: lds-ellipsis1 0.6s infinite;
+          }
+          .lds-ellipsis div:nth-child(2) {
+            left: 8px;
+            animation: lds-ellipsis2 0.6s infinite;
+          }
+          .lds-ellipsis div:nth-child(3) {
+            left: 32px;
+            animation: lds-ellipsis2 0.6s infinite;
+          }
+          .lds-ellipsis div:nth-child(4) {
+            left: 56px;
+            animation: lds-ellipsis3 0.6s infinite;
+          }
+          @keyframes lds-ellipsis1 {
+            0% {
+              transform: scale(0);
+            }
+            100% {
+              transform: scale(1);
+            }
+          }
+          @keyframes lds-ellipsis3 {
+            0% {
+              transform: scale(1);
+            }
+            100% {
+              transform: scale(0);
+            }
+          }
+          @keyframes lds-ellipsis2 {
+            0% {
+              transform: translate(0, 0);
+            }
+            100% {
+              transform: translate(24px, 0);
+            }
+          }
+          .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+          }
+          .letter-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            font-family: Roboto, Arial;
+            font-size: 64px;
+            color: #4CAF50;
+            font-weight: bold;
+          }
+          .letter-container div {
+            margin: 5px;
+            animation: letter 1.2s infinite;
+          }
+          @keyframes letter {
+            0% {
+              transform: translate(0px);
+            }
+            25% {
+              transform: translate(1px);
+            }
+            50% {
+              transform: translate(1px);
+              }
+            75% {
+              transform: translate(20px);
+              }
+            100% {
+              transform: translate(0px);
+              }
+          }
+          .letter-container div:nth-child(1) {
+            animation-delay: 0s;
+          }
+          .letter-container div:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+          .letter-container div:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+          .letter-container div:nth-child(4) {
+            animation-delay: 0.6s;
+          }
+      `}
+      </style>
+      <h1 className="title-gpt">TranslateGPT</h1>
+      <div className="prompt-header-container">
+        <input className="prompt-header" type="text" placeholder="Prompt header" value={messageHeader} onChange={(e) => setMessageHeader(e.target.value)} />
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="main-container">
+        <textarea className="prompt-textarea" value={message} onChange={(e) => setMessage(e.target.value)} />
+        <button className="send-prompt-button" onClick={handleButtonClick} disabled={waitingResponse}>Enviar</button>
+        <textarea className="answer-textarea" value={answer} readOnly />
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`${inter.className} mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p
-            className={`${inter.className} m-0 max-w-[30ch] text-sm opacity-50`}
-          >
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`${inter.className} mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p
-            className={`${inter.className} m-0 max-w-[30ch] text-sm opacity-50`}
-          >
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`${inter.className} mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p
-            className={`${inter.className} m-0 max-w-[30ch] text-sm opacity-50`}
-          >
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`${inter.className} mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p
-            className={`${inter.className} m-0 max-w-[30ch] text-sm opacity-50`}
-          >
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      {waitingResponse &&
+          <div className="loading-container">
+              <div className="letter-container">
+                  <div>M</div>
+                  <div>A</div>
+                  <div>X</div>
+                  <div>I</div>
+              </div>
+            <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+          </div>
+      }
+    </div>
+  );
 }
