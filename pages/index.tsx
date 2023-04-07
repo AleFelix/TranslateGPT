@@ -139,7 +139,7 @@ export default function Home() {
             height: 80%;
             width: 100%;
           }
-          textarea {
+          .textarea {
             margin: 10px;
             width: 30%;
             height: 70%;
@@ -169,7 +169,7 @@ export default function Home() {
             background-color: #CCCCCC;
             cursor: default;
           }
-          .answer-textarea {
+          .answer-div {
             background-color: #f5f5f5;
             cursor: default;
           }
@@ -297,9 +297,9 @@ export default function Home() {
         <input className="prompt-header" type="text" placeholder="Prompt header" value={messageHeader} onChange={(e) => setMessageHeader(e.target.value)} />
       </div>
       <div className="main-container">
-        <textarea className="prompt-textarea" value={message} onChange={(e) => setMessage(e.target.value)} />
+        <textarea className="prompt-textarea textarea" value={message} onChange={(e) => setMessage(e.target.value)} />
         <button className="send-prompt-button" onClick={handleButtonClick} disabled={waitingResponse}>Enviar</button>
-        <textarea className="answer-textarea" value={answer} readOnly />
+        <div className="answer-div textarea">{answer}</div>
       </div>
       {waitingResponse &&
           <div className="loading-container">
