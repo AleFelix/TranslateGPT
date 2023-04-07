@@ -161,6 +161,21 @@ export default function Home() {
             border: none;
             padding: 10px 20px;
             cursor: pointer;
+            border-radius: 8px;
+          }
+          .rotate-and-scale {
+            animation: rotate-and-scale 1s ease-in-out infinite;
+          }
+          @keyframes rotate-and-scale {
+            0% {
+              transform: scale(1) rotate(0deg);
+            }
+            50% {
+              transform: scale(1.2) rotate(180deg);
+            }
+            100% {
+              transform: scale(1) rotate(360deg);
+            }
           }
           .send-prompt-button:hover {
             background-color: #3E8E41;
@@ -298,7 +313,7 @@ export default function Home() {
       </div>
       <div className="main-container">
         <textarea className="prompt-textarea textarea" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <button className="send-prompt-button" onClick={handleButtonClick} disabled={waitingResponse}>Enviar</button>
+        <button className={waitingResponse ? "send-prompt-button rotate-and-scale" : "send-prompt-button"} onClick={handleButtonClick} disabled={waitingResponse}>Enviar</button>
         <div className="answer-div textarea">{answer}</div>
       </div>
       {waitingResponse &&
