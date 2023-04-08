@@ -15,6 +15,13 @@ export default function Home() {
 
   useEffect(() => {
     void getSessionData();
+    const isDarkMode = localStorage.getItem('darkMode');
+    if (isDarkMode === null) {
+      setDarkMode(true);
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      setDarkMode(JSON.parse(isDarkMode));
+    }
   }, []);
 
   useEffect(() => {
@@ -103,6 +110,7 @@ export default function Home() {
 
   const handleDarkModeClick = async () => {
     setDarkMode(!darkMode);
+    localStorage.setItem('darkMode', JSON.stringify(!darkMode));
   }
 
   return (
