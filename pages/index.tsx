@@ -7,7 +7,7 @@ export default function Home() {
   const [sessionID, setSessionID] = useState('');
   const [userFakeID, setUserFakeID] = useState('');
   const [message, setMessage] = useState('');
-  const [messageHeader, setMessageHeader] = useState('Traducir al ingles lo siguiente:');
+  const [messageHeader, setMessageHeader] = useState('Translate to english the following:');
   const [answer, setAnswer] = useState('');
   const [chatID, setChatID] = useState('0');
   const [waitingResponse, setWaitingResponse] = useState(false);
@@ -193,28 +193,30 @@ export default function Home() {
         </div>
         <div className="main-container">
           <div className="prompts-and-buttons-container">
-          <div className="top-buttons-container">
-            <div className="clear-button-container">
-              <div className={clearMessageHidden ? "clear-button-message hidden" : "clear-button-message"}>Cleared!</div>
-              <button className="clear-button" onClick={handleClearClick}>
-                <i className="fas fa-trash-alt"></i>
-              </button>
+            <div className="top-buttons-container">
+              <div className="clear-button-container">
+                <div className={clearMessageHidden ? "clear-button-message hidden" : "clear-button-message"}>Cleared!
+                </div>
+                <button className="clear-button" onClick={handleClearClick}>
+                  <i className="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <div className="copy-button-container">
+                <div className={copyMessageHidden ? "copy-button-message hidden" : "copy-button-message"}>Copied!</div>
+                <button className="copy-button" onClick={handleCopyClick}>
+                  <i className="fas fa-copy"></i>
+                </button>
+              </div>
             </div>
-            <div className="copy-button-container">
-              <div className={copyMessageHidden ? "copy-button-message hidden" : "copy-button-message"}>Copied!</div>
-              <button className="copy-button" onClick={handleCopyClick}>
-                <i className="fas fa-copy"></i>
+            <div className="prompt-textarea-container">
+              <textarea className="prompt-textarea textarea" style={{fontSize: promptFontSize}} value={message}
+                        onChange={handleMessageChange}/>
+              <button
+                className={(waitingResponse || sendingMessage) ? "send-prompt-button rotate-and-scale" : "send-prompt-button"}
+                onClick={handleButtonClick} disabled={waitingResponse || sendingMessage}>Send
               </button>
+              <div className="answer-div textarea" style={{fontSize: answerFontSize}}>{answer}</div>
             </div>
-          </div>
-          <div className="prompt-textarea-container">
-            <textarea className="prompt-textarea textarea" style={{fontSize: promptFontSize}} value={message} onChange={handleMessageChange}/>
-            <button
-              className={(waitingResponse || sendingMessage) ? "send-prompt-button rotate-and-scale" : "send-prompt-button"}
-              onClick={handleButtonClick} disabled={waitingResponse || sendingMessage}>Enviar
-            </button>
-            <div className="answer-div textarea" style={{fontSize: answerFontSize}}>{answer}</div>
-          </div>
           </div>
         </div>
         {(waitingResponse || sendingMessage) &&
