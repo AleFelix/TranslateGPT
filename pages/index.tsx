@@ -12,6 +12,8 @@ export default function Home() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [intervalStarted, setIntervalStarted] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [copyMessageHidden, setCopyMessageHidden] = useState(true);
+  const [clearMessageHidden, setClearMessageHidden] = useState(true);
 
   useEffect(() => {
     void getSessionData();
@@ -113,6 +115,22 @@ export default function Home() {
     localStorage.setItem('darkMode', JSON.stringify(!darkMode));
   }
 
+  const handleCopyClick = async () => {
+    setCopyMessageHidden(false);
+    setTimeout(() => {
+      setCopyMessageHidden(true);
+    }, 500);
+    await navigator.clipboard.writeText(answer);
+  }
+
+  const handleClearClick = async () => {
+    setClearMessageHidden(false);
+    setTimeout(() => {
+      setClearMessageHidden(true);
+    }, 500);
+    setMessage('');
+  }
+
   return (
     <>
       <link href="https://fonts.cdnfonts.com/css/roboto" rel="stylesheet"></link>
@@ -165,7 +183,7 @@ export default function Home() {
           }
           .main-container {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 80%;
@@ -173,8 +191,8 @@ export default function Home() {
           }
           .textarea {
             margin: 10px;
-            width: 30%;
-            height: 70%;
+            width: 100%;
+            height: 100%;
             font-family: Roboto, Arial;
             font-size: 16px;
             background-color: #FFFFFF;
@@ -218,7 +236,68 @@ export default function Home() {
           }
           .answer-div {
             background-color: #f5f5f5;
-            cursor: default;
+            cursor: text;
+          }
+          .top-buttons-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            align-items: end;
+            justify-content: space-between;
+            padding: 10px;
+            min-height: 70px;
+          }
+          .prompt-textarea-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: center;
+            height: 100%;
+            align-items: center;
+          }
+          .prompts-and-buttons-container {
+            display: flex;
+            width: 70%;
+            flex-direction: column;
+            height: 80%;
+            justify-content: center;
+            align-items: center;
+          }
+          .copy-button:hover {
+            color: #4CAF50;
+          }
+          .clear-button:hover {
+            color: #AF4C4C;
+          }
+          .copy-button-container {
+            display: flex;
+            align-items: flex-end;
+            flex-direction: column;
+          }
+          .clear-button-container {
+            display: flex;
+            align-items: flex-start;
+            flex-direction: column;
+          }
+          .copy-button-message {
+            margin-right: -20px;
+            opacity: 0;
+            animation: animation-fade-out-bottom-to-top 0.5s ease-in-out;
+          }
+          .clear-button-message {
+            margin-left: -20px;
+            opacity: 0;
+            animation: animation-fade-out-bottom-to-top 0.5s ease-in-out;
+          }
+          @keyframes animation-fade-out-bottom-to-top {
+            0% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(-100%);
+            }
           }
           .loading-container {
             position: absolute;
@@ -368,9 +447,8 @@ export default function Home() {
           cursor: default;
         }
         .answer-div {
-          background-color: #1f2937;
+          background-color: #19212d;
           color: #FFFFFF;
-          cursor: default;
         }
         .dark-mode-button {
           background-color: #1f2937;
@@ -400,11 +478,31 @@ export default function Home() {
                  onChange={(e) => setMessageHeader(e.target.value)}/>
         </div>
         <div className="main-container">
-          <textarea className="prompt-textarea textarea" value={message} onChange={(e) => setMessage(e.target.value)}/>
-          <button className={(waitingResponse || sendingMessage) ? "send-prompt-button rotate-and-scale" : "send-prompt-button"}
-                  onClick={handleButtonClick} disabled={waitingResponse || sendingMessage}>Enviar
-          </button>
-          <div className="answer-div textarea">{answer}</div>
+          <div className="prompts-and-buttons-container">
+          <div className="top-buttons-container">
+            <div className="clear-button-container">
+              <div className={clearMessageHidden ? "clear-button-message hidden" : "clear-button-message"}>Cleared!</div>
+              <button className="clear-button" onClick={handleClearClick}>
+                <i className="fas fa-trash-alt"></i>
+              </button>
+            </div>
+            <div className="copy-button-container">
+              <div className={copyMessageHidden ? "copy-button-message hidden" : "copy-button-message"}>Copied!</div>
+              <button className="copy-button" onClick={handleCopyClick}>
+                <i className="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          <div className="prompt-textarea-container">
+            <textarea className="prompt-textarea textarea" value={message}
+                      onChange={(e) => setMessage(e.target.value)}/>
+            <button
+              className={(waitingResponse || sendingMessage) ? "send-prompt-button rotate-and-scale" : "send-prompt-button"}
+              onClick={handleButtonClick} disabled={waitingResponse || sendingMessage}>Enviar
+            </button>
+            <div className="answer-div textarea">{answer}</div>
+          </div>
+          </div>
         </div>
         {(waitingResponse || sendingMessage) &&
             <div className="loading-container">
