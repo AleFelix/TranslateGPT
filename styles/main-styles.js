@@ -63,6 +63,7 @@ export default css`
     border-radius: 8px;
     padding: 24px;
     box-shadow: 0 1px 4px 0 rgba(0,0,0,.37);
+    overflow-y: auto;
   }
   .send-prompt-button {
     margin: 10px;
