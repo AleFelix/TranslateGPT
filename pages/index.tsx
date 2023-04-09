@@ -451,7 +451,6 @@ export default function Home() {
           color: #FFFFFF;
         }
         .dark-mode-button {
-          background-color: #1f2937;
           color: #FFFFFF;
         }
         .loading-container {
