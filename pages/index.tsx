@@ -2,6 +2,7 @@
 import {useEffect, useState} from 'react';
 import mainStyles from "../styles/main-styles";
 import darkStyles from "../styles/dark-styles";
+import Head from "next/head";
 
 export default function Home() {
   const [sessionID, setSessionID] = useState('');
@@ -174,6 +175,9 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <title>TranslateGPT Translator</title>
+      </Head>
       <link href="https://fonts.cdnfonts.com/css/roboto" rel="stylesheet"></link>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
             integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
